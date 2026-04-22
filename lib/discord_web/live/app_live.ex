@@ -1,21 +1,16 @@
 defmodule DiscordWeb.AppLive do
   use DiscordWeb, :live_view
 
-  @mock_servers [
-    %{id: "1", name: "My Server"},
-    %{id: "2", name: "Gaming Hub"}
-  ]
-
-  @mock_channels %{
-    "1" => ["general", "random", "announcements"],
-    "2" => ["general", "off-topic"]
-  }
+  alias Discord.Servers
 
   @impl true
   def mount(_params, _session, socket) do
+    user = socket.assigns.current_scope.user
+    servers = Servers.list_servers_for_user(user)
+
     {:ok,
      assign(socket,
-       servers: @mock_servers,
+       servers: servers,
        current_server: nil,
        channels: [],
        show_create_modal: false,
@@ -27,8 +22,8 @@ defmodule DiscordWeb.AppLive do
 
   @impl true
   def handle_params(%{"server_id" => server_id}, _uri, socket) do
-    server = Enum.find(socket.assigns.servers, &(&1.id == server_id))
-    channels = Map.get(@mock_channels, server_id, ["general"])
+    server = Enum.find(socket.assigns.servers, &(to_string(&1.id) == server_id))
+    channels = if server, do: Servers.list_channels(server), else: []
     {:noreply, assign(socket, current_server: server, channels: channels)}
   end
 
@@ -56,15 +51,21 @@ defmodule DiscordWeb.AppLive do
 
   def handle_event("create_server", %{"server" => %{"name" => name}}, socket) do
     name = String.trim(name)
-    new_id = :erlang.unique_integer([:positive]) |> to_string()
-    new_server = %{id: new_id, name: name}
-    servers = socket.assigns.servers ++ [new_server]
+    user = socket.assigns.current_scope.user
 
-    {:noreply,
-     socket
-     |> assign(servers: servers, show_create_modal: false)
-     |> push_navigate(to: ~p"/channels/#{new_id}")
-     |> put_flash(:info, "Server \"#{name}\" created!")}
+    case Servers.create_server(user, %{"name" => name}) do
+      {:ok, server} ->
+        servers = socket.assigns.servers ++ [server]
+
+        {:noreply,
+         socket
+         |> assign(servers: servers, show_create_modal: false)
+         |> push_navigate(to: ~p"/channels/#{server.id}")
+         |> put_flash(:info, "Server \"#{name}\" created!")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not create server.")}
+    end
   end
 
   def handle_event("show_invite_modal", _, socket) do
