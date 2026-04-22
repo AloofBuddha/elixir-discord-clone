@@ -1,0 +1,213 @@
+<div class="flex h-screen overflow-hidden text-sm select-none">
+  <%!-- ═══ Server Rail (72px) ══════════════════════════════════════════════ --%>
+  <nav class="w-[72px] shrink-0 bg-base-300 flex flex-col items-center pt-3 pb-2 gap-1 overflow-y-auto">
+    <%!-- Home / DMs --%>
+    <div class="relative w-full flex justify-center group/item">
+      <.link
+        href={~p"/channels"}
+        class={server_btn_class(@current_server == nil)}
+        title="Direct Messages"
+      >
+        <.icon name="hero-home" class="size-5" />
+      </.link>
+      <span class={indicator_class(@current_server == nil)} />
+    </div>
+
+    <div class="w-8 h-px bg-base-content/20 mx-auto my-1" />
+
+    <%!-- Server list --%>
+    <div :for={server <- @servers} class="relative w-full flex justify-center group/item">
+      <.link
+        href={~p"/channels/#{server.id}"}
+        class={server_btn_class(@current_server != nil && @current_server.id == server.id)}
+        title={server.name}
+      >
+        {server_initials(server.name)}
+      </.link>
+      <span class={indicator_class(@current_server != nil && @current_server.id == server.id)} />
+    </div>
+
+    <div class="w-8 h-px bg-base-content/20 mx-auto my-1" />
+
+    <%!-- Create Server --%>
+    <div class="w-full flex justify-center">
+      <button
+        phx-click="show_create_modal"
+        class="size-12 rounded-full hover:rounded-2xl bg-base-100 text-success hover:bg-success hover:text-success-content transition-all duration-200 flex items-center justify-center cursor-pointer"
+        title="Create a Server"
+      >
+        <.icon name="hero-plus" class="size-5" />
+      </button>
+    </div>
+  </nav>
+
+  <%!-- ═══ Channel Sidebar (240px) ════════════════════════════════════════ --%>
+  <aside class="w-60 shrink-0 bg-base-200 flex flex-col">
+    <%!-- Header --%>
+    <%= if @current_server do %>
+      <div class="h-12 px-4 border-b border-base-300 shadow-sm flex items-center justify-between cursor-pointer hover:bg-base-300/60 transition-colors shrink-0">
+        <span class="font-semibold truncate">{@current_server.name}</span>
+        <.icon name="hero-chevron-down-micro" class="size-4 shrink-0 text-base-content/50" />
+      </div>
+    <% else %>
+      <div class="h-12 px-4 border-b border-base-300 flex items-center shrink-0">
+        <span class="font-semibold">Direct Messages</span>
+      </div>
+    <% end %>
+
+    <%!-- Channel / DM list --%>
+    <div class="flex-1 overflow-y-auto px-2 py-2">
+      <%= if @current_server do %>
+        <div class="flex items-center justify-between px-1 pt-4 pb-1">
+          <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50 hover:text-base-content cursor-pointer">
+            Text Channels
+          </span>
+          <.icon
+            name="hero-plus-micro"
+            class="size-3.5 text-base-content/50 hover:text-base-content cursor-pointer"
+          />
+        </div>
+        <a
+          :for={ch <- @channels}
+          href="#"
+          class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-base-300 text-base-content/60 hover:text-base-content cursor-pointer"
+        >
+          <.icon name="hero-hashtag-micro" class="size-4 shrink-0" />
+          <span class="truncate">{ch}</span>
+        </a>
+      <% else %>
+        <p class="px-2 py-8 text-xs text-base-content/40 text-center">
+          No direct messages yet.
+        </p>
+      <% end %>
+    </div>
+
+    <%!-- User panel --%>
+    <div class="h-[52px] bg-base-300 px-2 flex items-center gap-2 shrink-0">
+      <div class="size-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-content shrink-0">
+        {user_initial(@current_scope.user.email)}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold truncate leading-tight">
+          {username(@current_scope.user.email)}
+        </p>
+        <p class="text-xs text-base-content/40 leading-tight">Online</p>
+      </div>
+      <.link
+        href={~p"/users/settings"}
+        class="btn btn-ghost btn-xs btn-circle"
+        title="User Settings"
+      >
+        <.icon name="hero-cog-6-tooth-micro" class="size-4" />
+      </.link>
+    </div>
+  </aside>
+
+  <%!-- ═══ Main Content ════════════════════════════════════════════════════ --%>
+  <main class="flex-1 bg-base-100 flex flex-col min-w-0 overflow-hidden">
+    <%= if @current_server do %>
+      <%!-- Channel header --%>
+      <div class="h-12 px-4 border-b border-base-300 shadow-sm flex items-center gap-2 shrink-0">
+        <.icon name="hero-hashtag" class="size-5 text-base-content/40 shrink-0" />
+        <span class="font-semibold">general</span>
+      </div>
+
+      <%!-- Empty message area (Milestone 3) --%>
+      <div class="flex-1 flex flex-col items-center justify-center gap-4 text-base-content/40">
+        <div class="size-16 rounded-full bg-base-200 flex items-center justify-center">
+          <.icon name="hero-hashtag" class="size-8" />
+        </div>
+        <div class="text-center space-y-1">
+          <p class="font-semibold text-base-content/60">Welcome to #general!</p>
+          <p class="text-sm">This is the start of the {@current_server.name} server.</p>
+        </div>
+        <button phx-click="show_invite_modal" class="btn btn-sm btn-primary mt-2">
+          <.icon name="hero-user-plus-micro" class="size-4" /> Invite People
+        </button>
+      </div>
+    <% else %>
+      <%!-- No server selected --%>
+      <div class="flex-1 flex flex-col items-center justify-center gap-3 text-base-content/40">
+        <.icon name="hero-rectangle-group" class="size-16" />
+        <p class="font-semibold text-base-content/50">No server selected</p>
+        <p class="text-sm">Pick a server from the sidebar, or create a new one.</p>
+        <button phx-click="show_create_modal" class="btn btn-sm btn-primary mt-2">
+          Create a Server
+        </button>
+      </div>
+    <% end %>
+  </main>
+</div>
+
+<%!-- ═══ Create Server Modal ════════════════════════════════════════════════ --%>
+<div :if={@show_create_modal} class="modal modal-open">
+  <div class="modal-box max-w-md">
+    <h3 class="text-lg font-bold">Create a Server</h3>
+    <p class="text-sm text-base-content/60 mt-1">
+      Your server starts with a #general channel.
+    </p>
+
+    <.form
+      for={@create_form}
+      phx-submit="create_server"
+      phx-change="validate_server"
+      class="mt-6"
+    >
+      <.input
+        field={@create_form[:name]}
+        label="Server Name"
+        placeholder="My Awesome Server"
+        required
+        phx-debounce="100"
+      />
+      <div class="modal-action mt-6">
+        <button type="button" class="btn btn-ghost" phx-click="hide_create_modal">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          disabled={String.trim(@server_name) == ""}
+        >
+          Create Server
+        </button>
+      </div>
+    </.form>
+  </div>
+  <div class="modal-backdrop" phx-click="hide_create_modal" />
+</div>
+
+<%!-- ═══ Invite People Modal ══════════════════════════════════════════════════ --%>
+<div :if={@show_invite_modal} class="modal modal-open">
+  <div class="modal-box max-w-md">
+    <h3 class="text-lg font-bold">Invite People</h3>
+    <p class="text-sm text-base-content/60 mt-1">
+      Share this server with friends.
+    </p>
+
+    <div class="mt-4 space-y-3">
+      <div>
+        <label class="label text-xs text-base-content/50 uppercase tracking-wide">
+          Invite Link
+        </label>
+        <div class="flex gap-2 mt-1">
+          <input
+            type="text"
+            class="input input-bordered flex-1 text-sm"
+            value="https://discord-clone.fly.dev/invite/coming-soon"
+            readonly
+          />
+          <button class="btn btn-primary btn-sm">Copy</button>
+        </div>
+      </div>
+      <p class="text-xs text-base-content/40">
+        Invite links and friend search will be available once server persistence is wired up.
+      </p>
+    </div>
+
+    <div class="modal-action">
+      <button class="btn btn-ghost" phx-click="hide_invite_modal">Close</button>
+    </div>
+  </div>
+  <div class="modal-backdrop" phx-click="hide_invite_modal" />
+</div>

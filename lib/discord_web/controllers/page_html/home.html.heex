@@ -7,11 +7,9 @@
     </p>
 
     <%= if @current_scope do %>
-      <div class="pt-4 space-y-2">
-        <p class="text-base-content/50 text-sm">
-          Signed in as {@current_scope.user.email}
-        </p>
-        <p class="text-base-content/40 text-sm">Servers and channels coming soon.</p>
+      <div class="pt-4 space-y-3">
+        <p class="text-base-content/50 text-sm">Signed in as {@current_scope.user.email}</p>
+        <.link href={~p"/channels"} class="btn btn-primary">Open App</.link>
       </div>
     <% else %>
       <div class="flex gap-3 justify-center pt-4">

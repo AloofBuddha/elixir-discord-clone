@@ -194,7 +194,62 @@ defmodule DiscordWeb.UserAuth do
     end
   end
 
-  defp signed_in_path(_conn), do: ~p"/"
+  defp signed_in_path(_conn), do: ~p"/channels"
+
+  @doc """
+  Handles mounting and authenticating the current_scope in LiveViews.
+
+  ## `on_mount` arguments
+
+    * `:ensure_authenticated` - authenticates the current_scope and redirects
+      to the login page if not authenticated.
+
+  ## Examples
+
+  Use the `on_mount` lifecycle macro in LiveViews to mount or authenticate
+  the current_scope:
+
+      defmodule DiscordWeb.PageLive do
+        use DiscordWeb, :live_view
+
+        on_mount {DiscordWeb.UserAuth, :ensure_authenticated}
+        ...
+      end
+
+  Or use the `live_session` of your router to invoke the on_mount callback:
+
+      live_session :authenticated, on_mount: [{DiscordWeb.UserAuth, :ensure_authenticated}] do
+        live "/profile", ProfileLive, :index
+      end
+  """
+  def on_mount(:ensure_authenticated, _params, session, socket) do
+    socket = mount_current_scope(socket, session)
+
+    case socket.assigns.current_scope do
+      %{user: user} when not is_nil(user) ->
+        {:cont, socket}
+
+      _ ->
+        {:halt,
+         socket
+         |> Phoenix.LiveView.put_flash(:error, "You must log in to access this page.")
+         |> Phoenix.LiveView.redirect(to: ~p"/users/log-in")}
+    end
+  end
+
+  defp mount_current_scope(socket, session) do
+    Phoenix.Component.assign_new(socket, :current_scope, fn ->
+      user =
+        with token when is_binary(token) <- session["user_token"],
+             {user, _} <- Accounts.get_user_by_session_token(token) do
+          user
+        else
+          _ -> nil
+        end
+
+      Scope.for_user(user)
+    end)
+  end
 
   @doc """
   Plug for routes that require the user to be authenticated.

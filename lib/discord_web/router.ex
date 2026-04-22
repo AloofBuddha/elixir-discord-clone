@@ -60,6 +60,13 @@ defmodule DiscordWeb.Router do
     get "/users/settings", UserSettingsController, :edit
     put "/users/settings", UserSettingsController, :update
     get "/users/settings/confirm-email/:token", UserSettingsController, :confirm_email
+
+    live_session :app,
+      on_mount: [{DiscordWeb.UserAuth, :ensure_authenticated}],
+      layout: {DiscordWeb.Layouts, :shell} do
+      live "/channels", AppLive, :index
+      live "/channels/:server_id", AppLive, :show
+    end
   end
 
   scope "/", DiscordWeb do

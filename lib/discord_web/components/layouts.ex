@@ -67,6 +67,19 @@ defmodule DiscordWeb.Layouts do
   end
 
   @doc """
+  Full-screen shell layout for app views. No nav or padding — the inner content
+  owns the entire viewport. Flash is still rendered.
+  """
+  attr :flash, :map, required: true
+
+  def shell(assigns) do
+    ~H"""
+    {@inner_content}
+    <.flash_group flash={@flash} />
+    """
+  end
+
+  @doc """
   Shows the flash group with standard titles and content.
 
   ## Examples
