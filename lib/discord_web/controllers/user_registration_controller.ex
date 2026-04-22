@@ -1,0 +1,45 @@
+defmodule DiscordWeb.UserRegistrationController do
+  use DiscordWeb, :controller
+
+  alias Discord.Accounts
+  alias Discord.Accounts.User
+  alias DiscordWeb.UserAuth
+
+  def new(conn, _params) do
+    changeset = Accounts.change_user_email(%User{})
+    render(conn, :new, changeset: changeset)
+  end
+
+  def create(conn, %{"user" => %{"password" => _} = user_params}) do
+    case Accounts.register_user_with_password(user_params) do
+      {:ok, user} ->
+        conn
+        |> put_flash(:info, "Account created successfully.")
+        |> UserAuth.log_in_user(user, user_params)
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        render(conn, :new, changeset: changeset)
+    end
+  end
+
+  def create(conn, %{"user" => user_params}) do
+    case Accounts.register_user(user_params) do
+      {:ok, user} ->
+        {:ok, _} =
+          Accounts.deliver_login_instructions(
+            user,
+            &url(~p"/users/log-in/#{&1}")
+          )
+
+        conn
+        |> put_flash(
+          :info,
+          "An email was sent to #{user.email}, please access it to confirm your account."
+        )
+        |> redirect(to: ~p"/users/log-in")
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        render(conn, :new, changeset: changeset)
+    end
+  end
+end
