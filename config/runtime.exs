@@ -18,17 +18,21 @@ import Config
 # script that automatically sets the env var above.
 import Dotenvy
 
-if config_env() == :dev do
-  source!([".env", ".env.local", System.get_env("ENV_FILE", "")])
-end
+dev_env =
+  if config_env() == :dev do
+    files = Enum.reject([".env", ".env.local", System.get_env("ENV_FILE")], &is_nil/1)
+    source!(files)
+  else
+    %{}
+  end
 
 if System.get_env("PHX_SERVER") do
   config :discord, DiscordWeb.Endpoint, server: true
 end
 
 config :discord, :google_oauth,
-  client_id: System.get_env("GOOGLE_CLIENT_ID"),
-  client_secret: System.get_env("GOOGLE_CLIENT_SECRET")
+  client_id: dev_env["GOOGLE_CLIENT_ID"] || System.get_env("GOOGLE_CLIENT_ID"),
+  client_secret: dev_env["GOOGLE_CLIENT_SECRET"] || System.get_env("GOOGLE_CLIENT_SECRET")
 
 config :discord, DiscordWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
