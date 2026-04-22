@@ -37,6 +37,17 @@ topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
+// Auto-dismiss flash toasts after their data-dismiss-after ms
+function scheduleDismiss() {
+  document.querySelectorAll("[data-dismiss-after]").forEach(el => {
+    if (el.dataset.dismissScheduled) return
+    el.dataset.dismissScheduled = "true"
+    setTimeout(() => el.click(), parseInt(el.dataset.dismissAfter, 5))
+  })
+}
+document.addEventListener("DOMContentLoaded", scheduleDismiss)
+window.addEventListener("phx:page-loading-stop", scheduleDismiss)
+
 // connect if there are any LiveViews on the page
 liveSocket.connect()
 
