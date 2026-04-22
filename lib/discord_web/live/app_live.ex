@@ -12,7 +12,10 @@ defmodule DiscordWeb.AppLive do
      assign(socket,
        servers: servers,
        current_server: nil,
+       current_channel: nil,
        channels: [],
+       messages: [],
+       message_input: "",
        show_create_modal: false,
        show_invite_modal: false,
        server_name: "",
@@ -21,14 +24,43 @@ defmodule DiscordWeb.AppLive do
   end
 
   @impl true
-  def handle_params(%{"server_id" => server_id}, _uri, socket) do
-    server = Enum.find(socket.assigns.servers, &(to_string(&1.id) == server_id))
+  def handle_params(%{"server_id" => server_id, "channel_id" => channel_id}, _uri, socket) do
+    server = find_server(socket, server_id)
     channels = if server, do: Servers.list_channels(server), else: []
-    {:noreply, assign(socket, current_server: server, channels: channels)}
+    channel = Enum.find(channels, &(to_string(&1.id) == channel_id))
+
+    socket =
+      socket
+      |> maybe_unsubscribe()
+      |> assign(current_server: server, channels: channels, current_channel: channel)
+      |> load_messages_and_subscribe(channel)
+
+    {:noreply, socket}
+  end
+
+  def handle_params(%{"server_id" => server_id}, _uri, socket) do
+    server = find_server(socket, server_id)
+    channels = if server, do: Servers.list_channels(server), else: []
+
+    socket = maybe_unsubscribe(socket)
+
+    socket =
+      case channels do
+        [first | _] ->
+          push_patch(socket, to: ~p"/channels/#{server_id}/#{first.id}")
+
+        [] ->
+          assign(socket, current_server: server, channels: [], current_channel: nil, messages: [])
+      end
+
+    {:noreply, socket}
   end
 
   def handle_params(_params, _uri, socket) do
-    {:noreply, assign(socket, current_server: nil, channels: [])}
+    socket = maybe_unsubscribe(socket)
+
+    {:noreply,
+     assign(socket, current_server: nil, channels: [], current_channel: nil, messages: [])}
   end
 
   @impl true
@@ -76,7 +108,55 @@ defmodule DiscordWeb.AppLive do
     {:noreply, assign(socket, show_invite_modal: false)}
   end
 
-  # --- Helpers used in the template ---
+  def handle_event("update_message_input", %{"content" => value}, socket) do
+    {:noreply, assign(socket, message_input: value)}
+  end
+
+  def handle_event("send_message", %{"content" => content}, socket) do
+    content = String.trim(content)
+    user = socket.assigns.current_scope.user
+    channel = socket.assigns.current_channel
+
+    if content != "" and channel do
+      case Servers.create_message(user, channel, content) do
+        {:ok, _message} ->
+          {:noreply, assign(socket, message_input: "")}
+
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Could not send message.")}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_info({:new_message, message}, socket) do
+    {:noreply, update(socket, :messages, &(&1 ++ [message]))}
+  end
+
+  # --- Private helpers ---
+
+  defp find_server(socket, server_id) do
+    Enum.find(socket.assigns.servers, &(to_string(&1.id) == server_id))
+  end
+
+  defp load_messages_and_subscribe(socket, nil), do: assign(socket, messages: [])
+
+  defp load_messages_and_subscribe(socket, channel) do
+    Servers.subscribe_to_channel(channel)
+    assign(socket, messages: Servers.list_messages(channel))
+  end
+
+  defp maybe_unsubscribe(socket) do
+    if channel = socket.assigns[:current_channel] do
+      Phoenix.PubSub.unsubscribe(Discord.PubSub, "channel:#{channel.id}")
+    end
+
+    socket
+  end
+
+  # --- Template helpers ---
 
   defp server_btn_class(active) do
     base =

@@ -45,9 +45,15 @@
   <aside class="w-60 shrink-0 bg-base-200 flex flex-col">
     <%!-- Header --%>
     <%= if @current_server do %>
-      <div class="h-12 px-4 border-b border-base-300 shadow-sm flex items-center justify-between cursor-pointer hover:bg-base-300/60 transition-colors shrink-0">
+      <div class="h-12 px-4 border-b border-base-300 shadow-sm flex items-center justify-between shrink-0">
         <span class="font-semibold truncate">{@current_server.name}</span>
-        <.icon name="hero-chevron-down-micro" class="size-4 shrink-0 text-base-content/50" />
+        <button
+          phx-click="show_invite_modal"
+          title="Invite to server"
+          class="shrink-0 text-base-content/40 hover:text-base-content transition-colors"
+        >
+          <.icon name="hero-user-plus-micro" class="size-4" />
+        </button>
       </div>
     <% else %>
       <div class="h-12 px-4 border-b border-base-300 flex items-center shrink-0">
@@ -67,14 +73,20 @@
             class="size-3.5 text-base-content/50 hover:text-base-content cursor-pointer"
           />
         </div>
-        <a
+        <.link
           :for={ch <- @channels}
-          href="#"
-          class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-base-300 text-base-content/60 hover:text-base-content cursor-pointer"
+          patch={~p"/channels/#{@current_server.id}/#{ch.id}"}
+          class={[
+            "flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer",
+            if(@current_channel && @current_channel.id == ch.id,
+              do: "bg-base-300 text-base-content",
+              else: "text-base-content/60 hover:bg-base-300 hover:text-base-content"
+            )
+          ]}
         >
           <.icon name="hero-hashtag-micro" class="size-4 shrink-0" />
           <span class="truncate">{ch.name}</span>
-        </a>
+        </.link>
       <% else %>
         <p class="px-2 py-8 text-xs text-base-content/40 text-center">
           No direct messages yet.
@@ -105,28 +117,76 @@
 
   <%!-- ═══ Main Content ════════════════════════════════════════════════════ --%>
   <main class="flex-1 bg-base-100 flex flex-col min-w-0 overflow-hidden">
-    <%= if @current_server do %>
+    <%= if @current_channel do %>
       <%!-- Channel header --%>
       <div class="h-12 px-4 border-b border-base-300 shadow-sm flex items-center gap-2 shrink-0">
         <.icon name="hero-hashtag" class="size-5 text-base-content/40 shrink-0" />
-        <span class="font-semibold">general</span>
+        <span class="font-semibold">{@current_channel.name}</span>
       </div>
 
-      <%!-- Empty message area (Milestone 3) --%>
-      <div class="flex-1 flex flex-col items-center justify-center gap-4 text-base-content/40">
+      <%!-- Empty state --%>
+      <div
+        :if={@messages == []}
+        class="flex-1 flex flex-col items-center justify-center gap-4 text-base-content/40"
+      >
         <div class="size-16 rounded-full bg-base-200 flex items-center justify-center">
           <.icon name="hero-hashtag" class="size-8" />
         </div>
         <div class="text-center space-y-1">
-          <p class="font-semibold text-base-content/60">Welcome to #general!</p>
+          <p class="font-semibold text-base-content/60">Welcome to #{@current_channel.name}!</p>
           <p class="text-sm">This is the start of the {@current_server.name} server.</p>
         </div>
-        <button phx-click="show_invite_modal" class="btn btn-sm btn-primary mt-2">
-          <.icon name="hero-user-plus-micro" class="size-4" /> Invite People
-        </button>
+      </div>
+
+      <%!-- Message list --%>
+      <div
+        :if={@messages != []}
+        id="messages"
+        class="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-1"
+      >
+        <div
+          :for={msg <- @messages}
+          id={"msg-#{msg.id}"}
+          class="flex gap-3 py-0.5 group hover:bg-base-200/50 rounded px-2 -mx-2"
+        >
+          <div class="size-8 rounded-full bg-primary shrink-0 flex items-center justify-center text-xs font-bold text-primary-content mt-0.5">
+            {msg.user && user_initial(msg.user.email)}
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-baseline gap-2">
+              <span class="font-semibold text-sm">{msg.user && username(msg.user.email)}</span>
+              <span class="text-xs text-base-content/30">
+                {Calendar.strftime(msg.inserted_at, "%H:%M")}
+              </span>
+            </div>
+            <p class="text-sm text-base-content/80 break-words">{msg.content}</p>
+          </div>
+        </div>
+      </div>
+
+      <%!-- Message input --%>
+      <div class="px-4 pb-4 shrink-0">
+        <form phx-submit="send_message" class="flex gap-2">
+          <input
+            type="text"
+            name="content"
+            value={@message_input}
+            placeholder={"Message ##{@current_channel.name}"}
+            autocomplete="off"
+            class="input input-bordered flex-1 text-sm"
+            phx-change="update_message_input"
+          />
+          <button
+            type="submit"
+            class="btn btn-primary btn-sm self-end h-10"
+            disabled={String.trim(@message_input) == ""}
+          >
+            <.icon name="hero-paper-airplane-micro" class="size-4" />
+          </button>
+        </form>
       </div>
     <% else %>
-      <%!-- No server selected --%>
+      <%!-- No server / no channel --%>
       <div class="flex-1 flex flex-col items-center justify-center gap-3 text-base-content/40">
         <.icon name="hero-rectangle-group" class="size-16" />
         <p class="font-semibold text-base-content/50">No server selected</p>
@@ -192,16 +252,22 @@
         </label>
         <div class="flex gap-2 mt-1">
           <input
+            id="invite-link-input"
             type="text"
             class="input input-bordered flex-1 text-sm"
-            value="https://discord-clone.fly.dev/invite/coming-soon"
+            value={@current_server && url(~p"/invite/#{@current_server.invite_token}")}
             readonly
           />
-          <button class="btn btn-primary btn-sm">Copy</button>
+          <button
+            class="btn btn-primary btn-sm"
+            onclick="navigator.clipboard.writeText(document.getElementById('invite-link-input').value)"
+          >
+            Copy
+          </button>
         </div>
       </div>
       <p class="text-xs text-base-content/40">
-        Invite links and friend search will be available once server persistence is wired up.
+        Anyone with this link can join the server.
       </p>
     </div>
 
