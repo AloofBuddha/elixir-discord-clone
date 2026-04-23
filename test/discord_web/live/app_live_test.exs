@@ -43,9 +43,9 @@ defmodule DiscordWeb.AppLiveTest do
     end
 
     test "shows the server initials in the rail when loading the page", %{conn: conn, user: user} do
-      # Pre-create the server so we can load the view without navigating
-      {:ok, _server} = Servers.create_server(user, %{"name" => "Rail Server"})
-      {:ok, _lv, html} = live(conn, ~p"/channels")
+      {:ok, server} = Servers.create_server(user, %{"name" => "Rail Server"})
+      channel = channel_fixture(server)
+      {:ok, _lv, html} = live(conn, ~p"/channels/#{server.id}/#{channel.id}")
       assert html =~ "RS"
     end
   end

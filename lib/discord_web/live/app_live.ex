@@ -59,8 +59,14 @@ defmodule DiscordWeb.AppLive do
   def handle_params(_params, _uri, socket) do
     socket = maybe_unsubscribe(socket)
 
-    {:noreply,
-     assign(socket, current_server: nil, channels: [], current_channel: nil, messages: [])}
+    case socket.assigns.servers do
+      [first | _] ->
+        {:noreply, push_patch(socket, to: ~p"/channels/#{first.id}")}
+
+      [] ->
+        {:noreply,
+         assign(socket, current_server: nil, channels: [], current_channel: nil, messages: [])}
+    end
   end
 
   @impl true
