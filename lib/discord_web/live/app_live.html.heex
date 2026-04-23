@@ -64,14 +64,10 @@
     <%!-- Channel / DM list --%>
     <div class="flex-1 overflow-y-auto px-2 py-2">
       <%= if @current_server do %>
-        <div class="flex items-center justify-between px-1 pt-4 pb-1">
-          <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50 hover:text-base-content cursor-pointer">
+        <div class="px-1 pt-4 pb-1">
+          <span class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
             Text Channels
           </span>
-          <.icon
-            name="hero-plus-micro"
-            class="size-3.5 text-base-content/50 hover:text-base-content cursor-pointer"
-          />
         </div>
         <.link
           :for={ch <- @channels}
@@ -87,21 +83,25 @@
           <.icon name="hero-hashtag-micro" class="size-4 shrink-0" />
           <span class="truncate">{ch.name}</span>
         </.link>
-      <% else %>
-        <p class="px-2 py-8 text-xs text-base-content/40 text-center">
-          No direct messages yet.
-        </p>
       <% end %>
     </div>
 
     <%!-- User panel --%>
     <div class="h-[52px] bg-base-300 px-2 flex items-center gap-2 shrink-0">
-      <div class="size-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-content shrink-0">
-        {user_initial(@current_scope.user.email)}
-      </div>
+      <%= if @current_scope.user.avatar_url do %>
+        <img
+          src={@current_scope.user.avatar_url}
+          class="size-8 rounded-full shrink-0 object-cover"
+          referrerpolicy="no-referrer"
+        />
+      <% else %>
+        <div class="size-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-content shrink-0">
+          {user_initial(@current_scope.user)}
+        </div>
+      <% end %>
       <div class="flex-1 min-w-0">
         <p class="text-sm font-semibold truncate leading-tight">
-          {username(@current_scope.user.email)}
+          {user_display_name(@current_scope.user)}
         </p>
         <p class="text-xs text-base-content/40 leading-tight">Online</p>
       </div>
@@ -149,12 +149,20 @@
           id={"msg-#{msg.id}"}
           class="flex gap-3 py-0.5 group hover:bg-base-200/50 rounded px-2 -mx-2"
         >
-          <div class="size-8 rounded-full bg-primary shrink-0 flex items-center justify-center text-xs font-bold text-primary-content mt-0.5">
-            {msg.user && user_initial(msg.user.email)}
-          </div>
+          <%= if msg.user && msg.user.avatar_url do %>
+            <img
+              src={msg.user.avatar_url}
+              class="size-8 rounded-full shrink-0 object-cover mt-0.5"
+              referrerpolicy="no-referrer"
+            />
+          <% else %>
+            <div class="size-8 rounded-full bg-primary shrink-0 flex items-center justify-center text-xs font-bold text-primary-content mt-0.5">
+              {msg.user && user_initial(msg.user)}
+            </div>
+          <% end %>
           <div class="min-w-0">
             <div class="flex items-baseline gap-2">
-              <span class="font-semibold text-sm">{msg.user && username(msg.user.email)}</span>
+              <span class="font-semibold text-sm">{msg.user && user_display_name(msg.user)}</span>
               <span class="text-xs text-base-content/30">
                 {Calendar.strftime(msg.inserted_at, "%H:%M")}
               </span>

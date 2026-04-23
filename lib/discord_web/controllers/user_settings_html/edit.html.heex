@@ -6,6 +6,22 @@
     </.header>
   </div>
 
+  <.form :let={f} for={@profile_changeset} action={~p"/users/settings"} id="update_profile">
+    <input type="hidden" name="action" value="update_profile" />
+
+    <.input
+      field={f[:display_name]}
+      type="text"
+      label="Display Name"
+      placeholder="How others see you"
+      spellcheck="false"
+    />
+
+    <.button variant="primary" phx-disable-with="Saving...">Save Profile</.button>
+  </.form>
+
+  <div class="divider" />
+
   <.form :let={f} for={@email_changeset} action={~p"/users/settings"} id="update_email">
     <input type="hidden" name="action" value="update_email" />
 

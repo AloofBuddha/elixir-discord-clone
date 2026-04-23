@@ -7,10 +7,25 @@ defmodule DiscordWeb.UserSettingsController do
   import DiscordWeb.UserAuth, only: [require_sudo_mode: 2]
 
   plug :require_sudo_mode
-  plug :assign_email_and_password_changesets
+  plug :assign_changesets
 
   def edit(conn, _params) do
     render(conn, :edit)
+  end
+
+  def update(conn, %{"action" => "update_profile"} = params) do
+    %{"user" => user_params} = params
+    user = conn.assigns.current_scope.user
+
+    case Accounts.update_user_profile(user, user_params) do
+      {:ok, _user} ->
+        conn
+        |> put_flash(:info, "Profile updated successfully.")
+        |> redirect(to: ~p"/users/settings")
+
+      {:error, changeset} ->
+        render(conn, :edit, profile_changeset: changeset)
+    end
   end
 
   def update(conn, %{"action" => "update_email"} = params) do
@@ -67,10 +82,11 @@ defmodule DiscordWeb.UserSettingsController do
     end
   end
 
-  defp assign_email_and_password_changesets(conn, _opts) do
+  defp assign_changesets(conn, _opts) do
     user = conn.assigns.current_scope.user
 
     conn
+    |> assign(:profile_changeset, Accounts.change_user_profile(user))
     |> assign(:email_changeset, Accounts.change_user_email(user))
     |> assign(:password_changeset, Accounts.change_user_password(user))
   end

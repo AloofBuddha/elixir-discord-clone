@@ -190,6 +190,8 @@ defmodule DiscordWeb.AppLive do
     |> String.upcase()
   end
 
-  defp user_initial(email), do: email |> String.first() |> String.upcase()
-  defp username(email), do: email |> String.split("@") |> hd()
+  defp user_display_name(%{display_name: name}) when is_binary(name) and name != "", do: name
+  defp user_display_name(%{email: email}), do: email |> String.split("@") |> hd()
+
+  defp user_initial(user), do: user |> user_display_name() |> String.first() |> String.upcase()
 end

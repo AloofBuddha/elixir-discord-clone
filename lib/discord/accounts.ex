@@ -99,17 +99,28 @@ defmodule Discord.Accounts do
   def find_or_create_from_oauth(provider, userinfo) do
     uid = to_string(userinfo["sub"] || userinfo["id"])
     email = userinfo["email"]
+    display_name = userinfo["name"]
+    avatar_url = userinfo["picture"]
 
     case Repo.get_by(UserIdentity, provider: provider, uid: uid) do
       %UserIdentity{user_id: user_id} ->
-        {:ok, Repo.get!(User, user_id)}
+        user = Repo.get!(User, user_id)
+        # Refresh profile fields from provider on each login
+        {:ok, user} =
+          user
+          |> User.profile_changeset(%{display_name: display_name, avatar_url: avatar_url})
+          |> Repo.update()
+
+        {:ok, user}
 
       nil ->
         Repo.transact(fn ->
           user =
             case Repo.get_by(User, email: email) do
               nil ->
-                case Repo.insert(User.oauth_registration_changeset(%User{}, %{email: email})) do
+                attrs = %{email: email, display_name: display_name, avatar_url: avatar_url}
+
+                case Repo.insert(User.oauth_registration_changeset(%User{}, attrs)) do
                   {:ok, user} -> user
                   {:error, changeset} -> throw({:error, changeset})
                 end
@@ -124,6 +135,22 @@ defmodule Discord.Accounts do
           end
         end)
     end
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user profile.
+  """
+  def change_user_profile(user, attrs \\ %{}) do
+    User.profile_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates the user display_name and avatar_url.
+  """
+  def update_user_profile(user, attrs) do
+    user
+    |> User.profile_changeset(attrs)
+    |> Repo.update()
   end
 
   ## Settings

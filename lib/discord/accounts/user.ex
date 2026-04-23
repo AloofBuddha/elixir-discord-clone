@@ -8,6 +8,8 @@ defmodule Discord.Accounts.User do
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
+    field :display_name, :string
+    field :avatar_url, :string
 
     has_many :user_identities, Discord.Accounts.UserIdentity
 
@@ -75,9 +77,15 @@ defmodule Discord.Accounts.User do
   """
   def oauth_registration_changeset(user, attrs) do
     user
-    |> cast(attrs, [:email])
+    |> cast(attrs, [:email, :display_name, :avatar_url])
     |> validate_email([])
     |> put_change(:confirmed_at, DateTime.utc_now(:second))
+  end
+
+  def profile_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:display_name, :avatar_url])
+    |> validate_length(:display_name, max: 80)
   end
 
   @doc """
