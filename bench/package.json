@@ -1,0 +1,19 @@
+{
+  "name": "discord-bench",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "bench": "tsx load_test.ts",
+    "report": "tsx generate_report.ts",
+    "rampup": "tsx rampup.ts",
+    "rampup:prod": "tsx rampup.ts --url wss://discord-clone-lingering-frog-1488.fly.dev"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

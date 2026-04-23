@@ -5,7 +5,7 @@ defmodule DiscordWeb.BenchmarkChannel do
 
   # Client sends a ping with a sent_at timestamp; broadcast to all subscribers.
   # Each recipient (including sender) receives the pong and can compute fan-out latency.
-  def handle_in("ping", %{"sent_at" => _} = payload, socket) do
+  def handle_in("ping", payload, socket) do
     broadcast!(socket, "pong", payload)
     {:noreply, socket}
   end

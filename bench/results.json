@@ -1,0 +1,136 @@
+[
+  {
+    "timestamp": "2026-04-23T05:14:27.159Z",
+    "tag": "10-vus",
+    "config": {
+      "url": "wss://discord-clone-lingering-frog-1488.fly.dev",
+      "vus": 10,
+      "duration": 30,
+      "warmup": 3
+    },
+    "results": {
+      "connected": 10,
+      "connectErrors": 0,
+      "pingsSent": 14,
+      "messagesReceived": 140,
+      "deliveryRate": 100,
+      "throughputMsgPerSec": 4.7,
+      "joinTimeAvgMs": 3598,
+      "latency": {
+        "avg": 38.892,
+        "p50": 37.562,
+        "p95": 52.174,
+        "p99": 59.731,
+        "max": 62.315
+      }
+    }
+  },
+  {
+    "timestamp": "2026-04-23T05:16:01.599Z",
+    "tag": "100-vus",
+    "config": {
+      "url": "wss://discord-clone-lingering-frog-1488.fly.dev",
+      "vus": 100,
+      "duration": 30,
+      "warmup": 3
+    },
+    "results": {
+      "connected": 99,
+      "connectErrors": 1,
+      "pingsSent": 150,
+      "messagesReceived": 14850,
+      "deliveryRate": 99,
+      "throughputMsgPerSec": 495,
+      "joinTimeAvgMs": 957,
+      "latency": {
+        "avg": 59.647,
+        "p50": 57.616,
+        "p95": 88.477,
+        "p99": 93.22,
+        "max": 99.879
+      }
+    }
+  },
+  {
+    "timestamp": "2026-04-23T05:17:44.081Z",
+    "tag": "500-vus",
+    "config": {
+      "url": "wss://discord-clone-lingering-frog-1488.fly.dev",
+      "vus": 500,
+      "duration": 30,
+      "warmup": 3
+    },
+    "results": {
+      "connected": 495,
+      "connectErrors": 5,
+      "pingsSent": 707,
+      "messagesReceived": 345397,
+      "deliveryRate": 97.7,
+      "throughputMsgPerSec": 11513.2,
+      "joinTimeAvgMs": 3486,
+      "latency": {
+        "avg": 239.119,
+        "p50": 180.981,
+        "p95": 596.288,
+        "p99": 699.408,
+        "max": 1138.521
+      }
+    }
+  },
+  {
+    "timestamp": "2026-04-23T05:25:57.390Z",
+    "tag": "1000-vus",
+    "config": {
+      "url": "wss://discord-clone-lingering-frog-1488.fly.dev",
+      "vus": 1000,
+      "channels": 10,
+      "vusPerChannel": 100,
+      "duration": 30,
+      "warmup": 5
+    },
+    "results": {
+      "connected": 1000,
+      "connectErrors": 0,
+      "pingsSent": 1400,
+      "messagesReceived": 140000,
+      "deliveryRate": 100,
+      "throughputMsgPerSec": 4666.7,
+      "joinTimeAvgMs": 7790,
+      "latency": {
+        "avg": 158.28,
+        "p50": 147.154,
+        "p95": 320.021,
+        "p99": 443.12,
+        "max": 483.286
+      }
+    }
+  },
+  {
+    "timestamp": "2026-04-23T05:28:57.311Z",
+    "tag": "100-vus",
+    "config": {
+      "url": "wss://discord-clone-lingering-frog-1488.fly.dev",
+      "vus": 100,
+      "channels": 10,
+      "vusPerChannel": 10,
+      "duration": 30,
+      "warmup": 3
+    },
+    "results": {
+      "connected": 100,
+      "connectErrors": 0,
+      "pingsSent": 140,
+      "messagesReceived": 1400,
+      "deliveryRate": 100,
+      "throughputMsgPerSec": 46.7,
+      "joinTimeAvgMs": 385,
+      "latency": {
+        "avg": 59.21,
+        "p50": 47.668,
+        "p95": 178.145,
+        "p99": 180.678,
+        "max": 182.018
+      }
+    }
+  }
+]
